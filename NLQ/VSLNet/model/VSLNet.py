@@ -11,7 +11,7 @@ from model.layers import (
     CQAttention,
     CQConcatenate,
     ConditionedPredictor,
-    HighLightLayer,
+    ###HighLightLayer,
     BertEmbedding,
 )
 
@@ -48,7 +48,7 @@ def build_optimizer_and_scheduler(model, configs):
     )
     return optimizer, scheduler
 
-
+#The model was edited in order to replicate the VSLBase architecture (QHG layer commented as ###)
 class VSLNet(nn.Module):
     def __init__(self, configs, word_vectors):
         super(VSLNet, self).__init__()
@@ -70,7 +70,7 @@ class VSLNet(nn.Module):
         self.cq_attention = CQAttention(dim=configs.dim, drop_rate=configs.drop_rate)
         self.cq_concat = CQConcatenate(dim=configs.dim)
         # query-guided highlighting
-        self.highlight_layer = HighLightLayer(dim=configs.dim)
+        ### self.highlight_layer = HighLightLayer(dim=configs.dim)
         # conditioned predictor
         self.predictor = ConditionedPredictor(
             dim=configs.dim,
@@ -127,8 +127,8 @@ class VSLNet(nn.Module):
         video_features = self.feature_encoder(video_features, mask=v_mask)
         features = self.cq_attention(video_features, query_features, v_mask, q_mask)
         features = self.cq_concat(features, query_features, q_mask)
-        h_score = self.highlight_layer(features, v_mask)
-        features = features * h_score.unsqueeze(2)
+        ###h_score = self.highlight_layer(features, v_mask)
+        ###features = features * h_score.unsqueeze(2)
         start_logits, end_logits = self.predictor(features, mask=v_mask)
         return h_score, start_logits, end_logits
 
@@ -137,10 +137,10 @@ class VSLNet(nn.Module):
             start_logits=start_logits, end_logits=end_logits
         )
 
-    def compute_highlight_loss(self, scores, labels, mask):
-        return self.highlight_layer.compute_loss(
-            scores=scores, labels=labels, mask=mask
-        )
+    ###def compute_highlight_loss(self, scores, labels, mask):
+        ###return self.highlight_layer.compute_loss(
+            ###scores=scores, labels=labels, mask=mask
+        ###)
 
     def compute_loss(self, start_logits, end_logits, start_labels, end_labels):
         return self.predictor.compute_cross_entropy_loss(
