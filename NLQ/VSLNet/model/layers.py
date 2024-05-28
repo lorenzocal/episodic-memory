@@ -32,64 +32,64 @@ class Conv1D(nn.Module):
         return x.transpose(1, 2)  # (batch_size, seq_len, dim)
 
 
-# class WordEmbedding(nn.Module):
-#     def __init__(self, num_words, word_dim, drop_rate, word_vectors=None):
-#         super(WordEmbedding, self).__init__()
-#         self.is_pretrained = False if word_vectors is None else True
-#         if self.is_pretrained:
-#             self.pad_vec = nn.Parameter(
-#                 torch.zeros(size=(1, word_dim), dtype=torch.float32),
-#                 requires_grad=False,
-#             )
-#             unk_vec = torch.empty(
-#                 size=(1, word_dim), requires_grad=True, dtype=torch.float32
-#             )
-#             nn.init.xavier_uniform_(unk_vec)
-#             self.unk_vec = nn.Parameter(unk_vec, requires_grad=True)
-#             self.glove_vec = nn.Parameter(
-#                 torch.tensor(word_vectors, dtype=torch.float32), requires_grad=False
-#             )
-#         else:
-#             self.word_emb = nn.Embedding(num_words, word_dim, padding_idx=0)
-#         self.dropout = nn.Dropout(p=drop_rate)
-
-#     def forward(self, word_ids):
-#         if self.is_pretrained:
-#             word_emb = F.embedding(
-#                 word_ids,
-#                 torch.cat([self.pad_vec, self.unk_vec, self.glove_vec], dim=0),
-#                 padding_idx=0,
-#             )
-#         else:
-#             word_emb = self.word_emb(word_ids)
-#         return self.dropout(word_emb)
-
 class WordEmbedding(nn.Module):
-    def __init__(self, bert_model_name='bert-base-uncased', drop_rate=0.1):
-        super(BERTEmbedding, self).__init__()
-        
-        # Load pre-trained BERT model and tokenizer
-        self.tokenizer = BertTokenizer.from_pretrained(bert_model_name)
-        self.bert = BertModel.from_pretrained(bert_model_name)
+    def __init__(self, num_words, word_dim, drop_rate, word_vectors=None):
+        super(WordEmbedding, self).__init__()
+        self.is_pretrained = False if word_vectors is None else True
+        if self.is_pretrained:
+            self.pad_vec = nn.Parameter(
+                torch.zeros(size=(1, word_dim), dtype=torch.float32),
+                requires_grad=False,
+            )
+            unk_vec = torch.empty(
+                size=(1, word_dim), requires_grad=True, dtype=torch.float32
+            )
+            nn.init.xavier_uniform_(unk_vec)
+            self.unk_vec = nn.Parameter(unk_vec, requires_grad=True)
+            self.glove_vec = nn.Parameter(
+                torch.tensor(word_vectors, dtype=torch.float32), requires_grad=False
+            )
+        else:
+            self.word_emb = nn.Embedding(num_words, word_dim, padding_idx=0)
         self.dropout = nn.Dropout(p=drop_rate)
 
-    def forward(self, input_texts):
-        # Tokenize input texts
-        encoded_inputs = self.tokenizer(
-            input_texts, return_tensors='pt', padding=True, truncation=True
-        )
+    def forward(self, word_ids):
+        if self.is_pretrained:
+            word_emb = F.embedding(
+                word_ids,
+                torch.cat([self.pad_vec, self.unk_vec, self.glove_vec], dim=0),
+                padding_idx=0,
+            )
+        else:
+            word_emb = self.word_emb(word_ids)
+        return self.dropout(word_emb)
+
+# class WordEmbedding(nn.Module):
+#     def __init__(self, bert_model_name='bert-base-uncased', drop_rate=0.1):
+#         super(BERTEmbedding, self).__init__()
         
-        # Get BERT embeddings
-        with torch.no_grad():  # No need to calculate gradients for embeddings
-            outputs = self.bert(**encoded_inputs)
+#         # Load pre-trained BERT model and tokenizer
+#         self.tokenizer = BertTokenizer.from_pretrained(bert_model_name)
+#         self.bert = BertModel.from_pretrained(bert_model_name)
+#         self.dropout = nn.Dropout(p=drop_rate)
+
+#     def forward(self, input_texts):
+#         # Tokenize input texts
+#         encoded_inputs = self.tokenizer(
+#             input_texts, return_tensors='pt', padding=True, truncation=True
+#         )
         
-        # Extract the last hidden state
-        last_hidden_state = outputs.last_hidden_state
+#         # Get BERT embeddings
+#         with torch.no_grad():  # No need to calculate gradients for embeddings
+#             outputs = self.bert(**encoded_inputs)
         
-        # Apply dropout
-        embeddings = self.dropout(last_hidden_state)
+#         # Extract the last hidden state
+#         last_hidden_state = outputs.last_hidden_state
         
-        return embeddings
+#         # Apply dropout
+#         embeddings = self.dropout(last_hidden_state)
+        
+#         return embeddings
         
 class CharacterEmbedding(nn.Module):
     def __init__(self, num_chars, char_dim, drop_rate):
