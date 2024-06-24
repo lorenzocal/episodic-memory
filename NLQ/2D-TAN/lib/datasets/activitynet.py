@@ -8,6 +8,7 @@ from torch import nn
 import torch.nn.functional as F
 import torch.utils.data as data
 import torchtext
+from torchtext.vocab import Vocab
 
 from . import average_to_fixed_length
 from core.eval import iou
